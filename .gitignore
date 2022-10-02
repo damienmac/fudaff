@@ -2,6 +2,7 @@
 # files you need locally and not to be shared publicly
 secrets.py
 names.py
+fuda*.csv
 .idea
 espn-api/*
 
