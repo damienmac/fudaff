@@ -1,3 +1,10 @@
+
+# files you need locally and not to be shared publicly
+secrets.py
+names.py
+
+### DEFAULT GITHUB PYTHON .giotignore BELOW HERE ###
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
