@@ -4,7 +4,7 @@ secrets.py
 names.py
 fuda*.csv
 .idea
-espn-api/*
+espn-api
 
 ### DEFAULT GITHUB PYTHON .giotignore BELOW HERE ###
 
