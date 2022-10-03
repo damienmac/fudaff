@@ -3,13 +3,13 @@ import csv
 
 from espn_api.football import League, Team
 
-from secrets import *
-from names import *
+from secrets import SWID, LEAGUE1_ID, LEAGUE2_ID, ESPN_S2_1, ESPN_S2_2
+from names import LEAGUE1, LEAGUE2
 
 WEEK = 4
 YEAR = 2022
 
-# (league_2 team_id, league_1 team_id), sorry, backwards.
+# (LEAGUE2 team_id, LEAGUE1 team_id), sorry, backwards.
 teammates = [
     (26, 10),
     (23, 9),
@@ -49,12 +49,19 @@ class MyTeam:
 
 def teams_and_standings(league: League):
     print("\nTEAMS & STANDINGS:")
+    heading = "standing, team name, tam id, place, wins, losses, ties"
+
     teams = {}  # keyed off of team_id
+    standings = []  # list of csv rows
     team: Team
     for team in league.teams:
         teams[team.team_id] = MyTeam(team)
         place = num2words(team.standing, ordinal=True)
-        print(f"({team.standing}) {team.team_name}({team.team_id}) is in {place} place with w:{team.wins} l:{team.losses} t:{team.ties}")
+        standings.append(f"{team.standing:02d}, {team.team_name}, {team.team_id}, {place}, {team.wins}, {team.losses}, {team.ties}")
+
+    print(heading)
+    [print(row) for row in sorted(standings)]
+
     return teams
 
 
@@ -67,7 +74,7 @@ def weekly_matchups(league: League):
 
 
 def weekly_scores(league: League, teams: dict):
-    print("\nBOX SCORES BY WEEK (CSV)")
+    print("\nBOX SCORES BY WEEK")
     scores = {}
     for week in range(1, WEEK+1):
         for box_score in league.box_scores(week):
@@ -92,37 +99,39 @@ def weekly_scores(league: League, teams: dict):
 
 def summary(league1_name, league_1_teams, league2_name, league_2_teams):
     for pairs in teammates:
-        # reminder: it is backwards: league_2, league_1
+        # reminder: it is backwards: LEAGUE2, LEAGUE1
         league_2_teams[pairs[0]].add_teammate(league_1_teams[pairs[1]])
         league_1_teams[pairs[1]].add_teammate(league_2_teams[pairs[0]])
 
     max_teamup_points = 0.0
     for team_id in league_2_teams.keys():
-        team_1 = league_2_teams[team_id].teammate  # team_1 = High Platinum
-        team_2 = league_2_teams[team_id]  # team_2 = OG FUDA
+        team_1 = league_2_teams[team_id].teammate
+        team_2 = league_2_teams[team_id]
         total_team_points = team_1.box_scores_total + team_2.box_scores_total
         team_1.teamup_total_points = team_2.teamup_total_points = total_team_points
         if total_team_points > max_teamup_points:
             max_teamup_points = total_team_points
 
-    header = ["Team Up", "Total Team Points", "Points Behind", "OG FUDA", "W-L-T Record (OG_FUDA)", "Total Points (OG_FUDA)", "High Platinum", "W-L-T Record (High Platinum)", "Total Points (High Platinum)"]
+    header = ["Team Up", "Total Team Points", "Points Behind",
+              league2_name, f"W-L-T Record ({league2_name})", f"Total Points ({league2_name})",
+              league1_name, f"W-L-T Record ({league1_name})", f"Total Points ({league1_name})", ]
 
     rows = []
     for team_id in league_2_teams:
-        team_1 = league_2_teams[team_id].teammate  # team_1 = High Platinum
-        team_2 = league_2_teams[team_id]  # team_2 = OG FUDA
+        team_1 = league_2_teams[team_id].teammate
+        team_2 = league_2_teams[team_id]
         team_1.points_behind = team_2.points_behind = (max_teamup_points - team_1.teamup_total_points)
 
         rows.append({
             "Team Up": f"{team_2.team.team_name} & {team_1.team.team_name}",
             "Total Team Points": team_1.teamup_total_points,
             "Points Behind": team_1.points_behind,
-            "OG FUDA": team_2.team.team_name,
-            "W-L-T Record (OG_FUDA)": f"{team_2.team.wins}-{team_2.team.losses}-{team_2.team.ties}",
-            "Total Points (OG_FUDA)": team_2.box_scores_total,
-            "High Platinum": team_1.team.team_name,
-            "W-L-T Record (High Platinum)": f"{team_1.team.wins}-{team_1.team.losses}-{team_1.team.ties}",
-            "Total Points (High Platinum)": team_1.box_scores_total
+            league2_name: team_2.team.team_name,
+            f"W-L-T Record ({league2_name})": f"{team_2.team.wins}-{team_2.team.losses}-{team_2.team.ties}",
+            f"Total Points ({league2_name})": team_2.box_scores_total,
+            league1_name: team_1.team.team_name,
+            f"W-L-T Record ({league1_name})": f"{team_1.team.wins}-{team_1.team.losses}-{team_1.team.ties}",
+            f"Total Points ({league1_name})": team_1.box_scores_total
         })
 
     return header, rows
@@ -131,10 +140,10 @@ def summary(league1_name, league_1_teams, league2_name, league_2_teams):
 def league_info():
 
     # private league with cookies
-    league1_name = "High Platinum"
+    league1_name = LEAGUE1["name"]
     league1 = League(league_id=LEAGUE1_ID, year=YEAR, espn_s2=ESPN_S2_1, swid=SWID)
 
-    league2_name = "OG FUDA"
+    league2_name = LEAGUE2["name"]
     league2 = League(league_id=LEAGUE2_ID, year=YEAR, espn_s2=ESPN_S2_2, swid=SWID)
 
     print(f"\n{league1_name}")
