@@ -8,6 +8,11 @@ leagues and keep a running total and ranking.
 This script will send some of that to stdout but the main table is emitted in a csv file
 suitable for import into Excel or Sheets (import it, don't open it there).
 
+This script relies on the
+[espn-api](https://github.com/cwendt94/espn-api)
+module, some better
+[docs are here](https://github.com/cwendt94/espn-api/wiki/Football-Intro).
+
 # ToDo
 
 * Track trades and any money owed for trades beyond the free ones.

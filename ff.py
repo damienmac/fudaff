@@ -6,8 +6,12 @@ from espn_api.football import League, Team
 from secrets import SWID, LEAGUE1_ID, LEAGUE2_ID, ESPN_S2_1, ESPN_S2_2
 from names import LEAGUE1, LEAGUE2
 
-WEEK = 4
+WEEK = 6
 YEAR = 2022
+
+ACTIVITIES_SIZE = 100
+FREE_TRADES = 15
+TRADE_COST = 1.00
 
 # (LEAGUE2 team_id, LEAGUE1 team_id), sorry, backwards.
 teammates = [
@@ -37,6 +41,9 @@ class MyTeam:
         self.teammate = None
         self.teamup_total_points = None
         self.points_behind = None
+
+        self.trades = 0
+        self.trades_cost = 0.0
 
     def add_box_score(self, score: float):
         self.box_scores.append(score)
@@ -97,6 +104,19 @@ def weekly_scores(league: League, teams: dict):
         print(f"{team}, {','.join(scores[team])}")
 
 
+def trades(league: League, teams: dict):
+    activities = league.recent_activity(size=ACTIVITIES_SIZE)
+    if len(activities) == ACTIVITIES_SIZE:
+        print(f"!!! Need more activities slots - hit {ACTIVITIES_SIZE}")
+    for activity in activities:
+        for action in activity.actions:
+            team = action[0]
+            action_type = action[1]
+            if action_type in ("TRADED", "FA ADDED", "WAIVER ADDED"):
+                teams[team.team_id].trades += 1
+                teams[team.team_id].trades_cost = max(0.0, TRADE_COST * (teams[team.team_id].trades - FREE_TRADES))
+
+
 def summary(league1_name, league_1_teams, league2_name, league_2_teams):
     for pairs in teammates:
         # reminder: it is backwards: LEAGUE2, LEAGUE1
@@ -112,9 +132,13 @@ def summary(league1_name, league_1_teams, league2_name, league_2_teams):
         if total_team_points > max_teamup_points:
             max_teamup_points = total_team_points
 
-    header = ["Team Up", "Total Team Points", "Points Behind",
-              league2_name, f"W-L-T Record ({league2_name})", f"Total Points ({league2_name})",
-              league1_name, f"W-L-T Record ({league1_name})", f"Total Points ({league1_name})", ]
+    header = [
+        "Team Up", "Total Team Points", "Points Behind",
+        league2_name, f"Record ({league2_name})", f"Total Points ({league2_name})",
+        f"Trades ({league2_name})", f"Cost ({league2_name})",
+        league1_name, f"Record ({league1_name})", f"Total Points ({league1_name})",
+        f"Trades ({league1_name})", f"Cost ({league1_name})",
+    ]
 
     rows = []
     for team_id in league_2_teams:
@@ -127,11 +151,15 @@ def summary(league1_name, league_1_teams, league2_name, league_2_teams):
             "Total Team Points": team_1.teamup_total_points,
             "Points Behind": team_1.points_behind,
             league2_name: team_2.team.team_name,
-            f"W-L-T Record ({league2_name})": f"{team_2.team.wins}-{team_2.team.losses}-{team_2.team.ties}",
+            f"Record ({league2_name})": f"{team_2.team.wins}-{team_2.team.losses}",
             f"Total Points ({league2_name})": team_2.box_scores_total,
+            f"Trades ({league2_name})": team_2.trades,
+            f"Cost ({league2_name})": f"${team_2.trades_cost:0.2f}",
             league1_name: team_1.team.team_name,
-            f"W-L-T Record ({league1_name})": f"{team_1.team.wins}-{team_1.team.losses}-{team_1.team.ties}",
-            f"Total Points ({league1_name})": team_1.box_scores_total
+            f"Record ({league1_name})": f"{team_1.team.wins}-{team_1.team.losses}",
+            f"Total Points ({league1_name})": team_1.box_scores_total,
+            f"Trades ({league1_name})": team_1.trades,
+            f"Cost ({league1_name})": f"${team_1.trades_cost:0.2f}",
         })
 
     return header, rows
@@ -150,11 +178,13 @@ def league_info():
     league_1_teams = teams_and_standings(league1)
     # weekly_matchups(league1)
     weekly_scores(league1, league_1_teams)
+    trades(league1, league_1_teams)
 
     print(f"\n{league2_name}")
     league_2_teams = teams_and_standings(league2)
     # weekly_matchups(league2)
     weekly_scores(league2, league_2_teams)
+    trades(league2, league_2_teams)
 
     header, rows = summary(league1_name, league_1_teams, league2_name, league_2_teams)
     print("\n")
