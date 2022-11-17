@@ -1,3 +1,4 @@
+import argparse
 from num2words import num2words
 import csv
 
@@ -6,12 +7,25 @@ from espn_api.football import League, Team
 from secrets import SWID, LEAGUE1_ID, LEAGUE2_ID, ESPN_S2_1, ESPN_S2_2
 from names import LEAGUE1, LEAGUE2
 
-WEEK = 6
-YEAR = 2022
+parser = argparse.ArgumentParser(prog='python3 fudaff.py',
+                                 description='Collect the stats for 2 leagues into a csv file.')
 
-ACTIVITIES_SIZE = 100
+parser.add_argument('-w', '--week', action='store', type=int, required=True,
+                    help="The week up to which you'd like to run stats")
+parser.add_argument('-y', '--year', action='store', type=int, required=False, default='2022',
+                    help="The year/season start, defaults to 2022")
+
+args = parser.parse_args()
+
+WEEK = args.week
+YEAR = args.year
+
+# hardcoded still, not on command line, yet
+ACTIVITIES_SIZE = 200
 FREE_TRADES = 15
 TRADE_COST = 1.00
+
+print(f"Week {WEEK} {YEAR}; max activities {ACTIVITIES_SIZE}, free trades: {FREE_TRADES}, trade cost ${TRADE_COST:0.2f}")
 
 # (LEAGUE2 team_id, LEAGUE1 team_id), sorry, backwards.
 teammates = [
@@ -64,7 +78,8 @@ def teams_and_standings(league: League):
     for team in league.teams:
         teams[team.team_id] = MyTeam(team)
         place = num2words(team.standing, ordinal=True)
-        standings.append(f"{team.standing:02d}, {team.team_name}, {team.team_id}, {place}, {team.wins}, {team.losses}, {team.ties}")
+        standings.append(
+            f"{team.standing:02d}, {team.team_name}, {team.team_id}, {place}, {team.wins}, {team.losses}, {team.ties}")
 
     print(heading)
     [print(row) for row in sorted(standings)]
@@ -74,16 +89,17 @@ def teams_and_standings(league: League):
 
 def weekly_matchups(league: League):
     print("\nWEEKLY MATCHUPS")
-    for week in range(1, WEEK+1):
+    for week in range(1, WEEK + 1):
         matchups = league.scoreboard(week)
         for matchup in matchups:
-            print(f"Week {week}: {matchup.away_team.team_name}({matchup.away_score}) at {matchup.home_team.team_name}({matchup.home_score})")
+            print(
+                f"Week {week}: {matchup.away_team.team_name}({matchup.away_score}) at {matchup.home_team.team_name}({matchup.home_score})")
 
 
 def weekly_scores(league: League, teams: dict):
     print("\nBOX SCORES BY WEEK")
     scores = {}
-    for week in range(1, WEEK+1):
+    for week in range(1, WEEK + 1):
         for box_score in league.box_scores(week):
             home_team = box_score.home_team.team_name
             away_team = box_score.away_team.team_name
@@ -166,7 +182,6 @@ def summary(league1_name, league_1_teams, league2_name, league_2_teams):
 
 
 def league_info():
-
     # private league with cookies
     league1_name = LEAGUE1["name"]
     league1 = League(league_id=LEAGUE1_ID, year=YEAR, espn_s2=ESPN_S2_1, swid=SWID)

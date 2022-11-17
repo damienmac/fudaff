@@ -15,7 +15,7 @@ module, some better
 
 # ToDo
 
-* Track trades and any money owed for trades beyond the free ones.
+*
 
 # Secrets
 
