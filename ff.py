@@ -12,8 +12,8 @@ parser = argparse.ArgumentParser(prog='python3 fudaff.py',
 
 parser.add_argument('-w', '--week', action='store', type=int, required=True,
                     help="The week up to which you'd like to run stats")
-parser.add_argument('-y', '--year', action='store', type=int, required=False, default='2022',
-                    help="The year/season start, defaults to 2022")
+parser.add_argument('-y', '--year', action='store', type=int, required=False, default='2023',
+                    help="The year/season start, defaults to 2023")
 
 args = parser.parse_args()
 
@@ -29,16 +29,16 @@ print(f"Week {WEEK} {YEAR}; max activities {ACTIVITIES_SIZE}, free trades: {FREE
 
 # (LEAGUE2 team_id, LEAGUE1 team_id), sorry, backwards.
 teammates = [
-    (26, 10),
-    (23, 9),
-    (15, 8),
-    (24, 7),
+    (1, 4),
+    (15, 9),
+    (20, 8),
+    (21, 7),
     (22, 6),
-    (1, 5),
-    (21, 1),
-    (25, 4),
-    (27, 3),
-    (20, 2),
+    (23, 5),
+    (24, 1),
+    (25, 10),
+    (26, 3),
+    (27, 2),
 ]
 
 
